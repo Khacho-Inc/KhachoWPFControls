@@ -1,17 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace KhachoWPFControls
 {
@@ -31,6 +21,11 @@ namespace KhachoWPFControls
 		/// Текущее значение.
 		/// </summary>
 		public static DependencyProperty ValueProperty;
+
+		/// <summary>
+		/// Указывает число отображаемых десятичных разрядов.
+		/// </summary>
+		public static DependencyProperty DecimalPlacesProperty;
 
 		#endregion
 
@@ -56,54 +51,33 @@ namespace KhachoWPFControls
 			set { base.SetValue(ArrowsVisibilityProperty, value); }
 		}
 
-		///// <summary>
-		///// Текущее значение.
-		///// </summary>
-		//public Decimal Value
-		//{
-		//	get
-		//	{
-		//		decimal val = 0;
-		//		tb_value.Dispatcher.Invoke(() => Decimal.TryParse(tb_value.Text, out val));
-		//		return val;
-		//	}
-		//	set { tb_value.Dispatcher.Invoke(() => tb_value.Text = string.Format(stringFormat, value)); }
-		//}
-
 		/// <summary>
 		/// Текущее значение.
 		/// </summary>
-		public Decimal Value
+		public decimal Value
 		{
-			get { return (Decimal)base.GetValue(ValueProperty); }
+			get { return (decimal)base.GetValue(ValueProperty); }
 			set { base.SetValue(ValueProperty, value); }
 		}
-
 
 		/// <summary>
 		/// Указывает число отображаемых десятичных разрядов.
 		/// </summary>
 		public int DecimalPlaces
 		{
-			get { return decimalPlaces; }
-			set
-			{
-				decimalPlaces = value;
-				stringFormat = string.Concat("{0:F", decimalPlaces, "}");
-				Value = Value;
-			}
+			get { return (int)base.GetValue(DecimalPlacesProperty); }
+			set { base.SetValue(DecimalPlacesProperty, value); }
 		}
-		private int decimalPlaces;
 
 		/// <summary>
 		/// Указывает максимальное значение.
 		/// </summary>
-		public Decimal Maximum { get; set; }
+		public decimal Maximum { get; set; }
 
 		/// <summary>
 		/// Указывает минимальное значение.
 		/// </summary>
-		public Decimal Minimum { get; set; }
+		public decimal Minimum { get; set; }
 
 		/// <summary>
 		/// Определяет, отображается или скрыт данный элемент управления.
@@ -112,6 +86,19 @@ namespace KhachoWPFControls
 		{
 			get { return grid_main.Visibility == System.Windows.Visibility.Visible; }
 			set { grid_main.Visibility = (value) ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden; }
+		}
+
+		/// <summary>
+		/// Строковое представление значения.
+		/// </summary>
+		public string ValueString
+		{
+			get { return string.Format(stringFormat, Value); }
+			set
+			{
+				// проводим валидацию
+				Value = validationValue(value);
+			}
 		}
 
 		#endregion
@@ -123,7 +110,7 @@ namespace KhachoWPFControls
 		/// Формат строки, представляющей текущее значение.
 		/// </summary>
 		private string stringFormat = "{0:F0}";
-
+		
 		#endregion
 
 
@@ -139,8 +126,11 @@ namespace KhachoWPFControls
 			ArrowsVisibilityProperty = DependencyProperty.Register("ArrowsVisibility", typeof(Visibility), typeof(NumericUpDown),
 				new UIPropertyMetadata(Visibility.Visible, new PropertyChangedCallback(arrowsVisibilityChanged)));
 			// текущее значение
-			ValueProperty = DependencyProperty.Register("Value", typeof(Decimal), typeof(NumericUpDown),
+			ValueProperty = DependencyProperty.Register("Value", typeof(decimal), typeof(NumericUpDown),
 				new UIPropertyMetadata(0m, new PropertyChangedCallback(valueChanged)));
+			// количество знаков после запятой
+			DecimalPlacesProperty = DependencyProperty.Register("DecimalPlaces", typeof(int), typeof(NumericUpDown),
+				new UIPropertyMetadata(0, new PropertyChangedCallback(decimalPlacesChanged)));
 		}
 
 		/// <summary>
@@ -148,16 +138,20 @@ namespace KhachoWPFControls
 		/// </summary>
 		public NumericUpDown()
 		{
+			// инициализируем визуальные компоненты
 			InitializeComponent();
+			// задаем значения по-умолчанию
 			Maximum = 100;
 			Minimum = 0;
 			Value = 0;
+			// задаем контекст данных редактору текста
+			tb_value.DataContext = this;
 		}
 
 		#endregion
 
 
-		#region {PRIVATE_METHODS}
+		#region {DEPENDENCY_PROPERTIES_METHODS}
 
 		/// <summary>
 		/// Обработка события изменения значения видимости стрелок.
@@ -186,9 +180,57 @@ namespace KhachoWPFControls
 		{
 			// извлекаем текущий отображатель числа
 			var nud = depObj as NumericUpDown;
+			
+			// провоцируем событие изменения значения
+			if (nud.ValueChanged != null) nud.ValueChanged(nud, new RoutedEventArgs());
+		}
 
+		/// <summary>
+		/// Обработка события изменения значения количества знаков после запятой.
+		/// </summary>
+		/// <param name="depObj">Объект, сгенерировавший событие.</param>
+		/// <param name="ea">Данные события.</param>
+		private static void decimalPlacesChanged(DependencyObject depObj, DependencyPropertyChangedEventArgs ea)
+		{
+			// извлекаем текущий отображатель числа
+			var nud = depObj as NumericUpDown;
+
+			// формируем новую строку формата данных
+			nud.stringFormat = string.Concat("{0:F", (int)ea.NewValue, "}");
 			// применяем изменение свойства
-			nud.tb_value.Dispatcher.Invoke(() => nud.tb_value.Text = string.Format(nud.stringFormat, ea.NewValue));
+			nud.tb_value.Dispatcher.Invoke(() => nud.tb_value.Text = string.Format(nud.stringFormat, nud.Value));
+		}
+
+		#endregion
+
+
+		#region {PRIVATE_METHODS}
+
+		/// <summary>
+		/// Проводит валидацию переданного значения <paramref name="value"/> и в случае успешной валидации возвращает его числовое представление. В противном случае возвращает текущее значение элемента управления.
+		/// </summary>
+		/// <param name="value">Проверяемое строковое значение.</param>
+		/// <returns>Числовое представление строкового значения в случаем успешной валидации. В противном случае текущее значение элемента управления.</returns>
+		private decimal validationValue(string value)
+		{
+			// готовим значение
+			decimal newValue;
+
+			// пытаемся разобрать значение
+			if (decimal.TryParse(value, out newValue) == false)
+			{
+				// в случае ошибки вернем текущее значение
+				newValue = Value;
+			}
+			else
+			{
+				// в случае успеха проверяем на выход за допустимый диапазон
+				if (newValue < Minimum) newValue = Minimum;
+				if (newValue > Maximum) newValue = Maximum;
+			}
+
+			// возвращаем получившееся значение
+			return newValue;
 		}
 
 		#endregion
@@ -225,14 +267,40 @@ namespace KhachoWPFControls
 			Value--;
 		}
 
+		private void tb_value_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+		{
+			// выделяем весь текст
+			tb_value.SelectAll();
+		}
+
+		private void tb_value_GotMouseCapture(object sender, MouseEventArgs e)
+		{
+			// выделяем весь текст
+			tb_value.SelectAll();
+			e.Handled = false;
+		}
+
 		private void tb_value_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			// выделяем весь текст
 			tb_value.SelectAll();
 		}
 
+		private void tb_value_PreviewKeyDown(object sender, KeyEventArgs e)
+		{
+			// опрелеям, нажат ли Enter
+			if (e.Key == Key.Enter)
+			{
+				// перемещаем фокус на следующий элемент
+				tb_value.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+				// останавливаем трассировку события, что бы следующий элемент не обрабатывал его
+				e.Handled = true;
+			}
+		}
+
 		private void tb_value_PreviewTextInput(object sender, TextCompositionEventArgs e)
 		{
+			// если строка пустая, прерываем обработку
 			if (string.IsNullOrEmpty(e.Text))
 			{
 				e.Handled = true;
@@ -244,10 +312,10 @@ namespace KhachoWPFControls
 			separatorPosition = (separatorPosition == -1) ? tb_value.Text.Length : separatorPosition;
 			// отсекаем любые символы, кроме одной запятой...
 			if (e.Text.Equals(",") && (tb_value.Text.Any(ch => ch.Equals(e.Text[0])) == false) ||
-				// ...и цифр, если их количество после запятой не превышает допустимого...
-				Char.IsDigit(e.Text, 0) /*&& tb_value.Text.Substring(separatorPosition).Length <= decimalPlaces*/ ||
-				// ...и знака '-'
-				e.Text.Equals("-"))
+				// ...и цифр /*, если их количество после запятой не превышает допустимого... */
+				char.IsDigit(e.Text, 0) /*&& tb_value.Text.Substring(separatorPosition).Length <= decimalPlaces*/ ||
+				// ...и одного знака '-'
+				e.Text.Equals("-") && (tb_value.Text.Any(ch => ch.Equals(e.Text[0])) == false))
 			{
 				e.Handled = false;
 			}
@@ -255,21 +323,6 @@ namespace KhachoWPFControls
 			{
 				e.Handled = true;
 			}
-		}
-
-		private void tb_value_TextChanged(object sender, TextChangedEventArgs e)
-		{
-			// ограничиваем значение по максимуму и минимуму
-			if (Value > Maximum) Value = Maximum;
-			if (Value < Minimum) Value = Minimum;
-
-			// формируем значение
-			var value = 0m;
-			tb_value.Dispatcher.Invoke(() => Decimal.TryParse(tb_value.Text, out value));
-			Value = value;
-
-			// провоцируем событие изменения значения
-			if (ValueChanged != null) ValueChanged(this, new RoutedEventArgs());
 		}
 
 		#endregion

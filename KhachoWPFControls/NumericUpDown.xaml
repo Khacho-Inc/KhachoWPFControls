@@ -98,12 +98,15 @@
 				</Grid.RowDefinitions>
 				<!--Поле ввода-->
 				<TextBox Name="tb_value" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"
-						 TextAlignment="Left" VerticalContentAlignment="Top" FontSize="13" Text="100" Padding="0" BorderThickness="0"
+						 TextAlignment="Left" VerticalContentAlignment="Top" FontSize="13" Padding="0" BorderThickness="0"
+						 Text="{Binding ValueString, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnExceptions=True}"
 						 PreviewTextInput="tb_value_PreviewTextInput"
-						 TextChanged="tb_value_TextChanged"
+						 PreviewKeyDown="tb_value_PreviewKeyDown"
 						 MouseDoubleClick="tb_value_MouseDoubleClick"
+						 GotMouseCapture="tb_value_GotMouseCapture"
+						 GotKeyboardFocus="tb_value_GotKeyboardFocus"
 						 />
-				<!--инкремент-->
+                <!--инкремент-->
 				<RepeatButton Name="b_increase" Grid.Column="1" Grid.Row="0" Template="{StaticResource NumericUpDownButtonTemplate}"
 					IsTabStop="False"
 					Click="b_increase_Click">
