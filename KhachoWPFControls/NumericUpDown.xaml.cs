@@ -15,17 +15,17 @@ namespace KhachoWPFControls
 		/// <summary>
 		/// Видимость стрелок.
 		/// </summary>
-		public static DependencyProperty ArrowsVisibilityProperty;
+		public static DependencyProperty ArrowsVisibilityProperty { get; set; }
 
 		/// <summary>
 		/// Текущее значение.
 		/// </summary>
-		public static DependencyProperty ValueProperty;
+		public static DependencyProperty ValueProperty { get; set; }
 
 		/// <summary>
 		/// Указывает число отображаемых десятичных разрядов.
 		/// </summary>
-		public static DependencyProperty DecimalPlacesProperty;
+		public static DependencyProperty DecimalPlacesProperty { get; set; }
 
 		#endregion
 
@@ -110,7 +110,7 @@ namespace KhachoWPFControls
 		/// Формат строки, представляющей текущее значение.
 		/// </summary>
 		private string stringFormat = "{0:F0}";
-		
+
 		#endregion
 
 
@@ -180,8 +180,11 @@ namespace KhachoWPFControls
 		{
 			// извлекаем текущий отображатель числа
 			var nud = depObj as NumericUpDown;
+
+			// отображаем новое значение
+			nud.tb_value.Text = ((decimal)ea.NewValue).ToString();
 			
-			// провоцируем событие изменения значения
+			// генерируем событие изменения значения
 			if (nud.ValueChanged != null) nud.ValueChanged(nud, new RoutedEventArgs());
 		}
 
@@ -207,7 +210,8 @@ namespace KhachoWPFControls
 		#region {PRIVATE_METHODS}
 
 		/// <summary>
-		/// Проводит валидацию переданного значения <paramref name="value"/> и в случае успешной валидации возвращает его числовое представление. В противном случае возвращает текущее значение элемента управления.
+		/// Проводит валидацию переданного значения <paramref name="value"/> и в случае успешной валидации возвращает его числовое представление.
+		/// В противном случае возвращает текущее значение элемента управления.
 		/// </summary>
 		/// <param name="value">Проверяемое строковое значение.</param>
 		/// <returns>Числовое представление строкового значения в случаем успешной валидации. В противном случае текущее значение элемента управления.</returns>
@@ -277,7 +281,6 @@ namespace KhachoWPFControls
 		{
 			// выделяем весь текст
 			tb_value.SelectAll();
-			e.Handled = false;
 		}
 
 		private void tb_value_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -291,10 +294,8 @@ namespace KhachoWPFControls
 			// опрелеям, нажат ли Enter
 			if (e.Key == Key.Enter)
 			{
-				// перемещаем фокус на следующий элемент
-				tb_value.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-				// останавливаем трассировку события, что бы следующий элемент не обрабатывал его
-				e.Handled = true;
+				// принимаем введенные пользователем данные
+				ValueString = tb_value.Text;
 			}
 		}
 

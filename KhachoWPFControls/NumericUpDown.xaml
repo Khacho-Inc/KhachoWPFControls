@@ -6,8 +6,8 @@
              mc:Ignorable="d"
              d:DesignHeight="22" d:DesignWidth="100"
 			 SizeChanged="UserControl_SizeChanged">
-	
-	<!--Ресурсы-->
+
+    <!--Ресурсы-->
 	<UserControl.Resources>
 		<!--Кисти-->
 		<LinearGradientBrush x:Key="ButtonNormalBackground" EndPoint="0,1" StartPoint="0,0">
@@ -99,9 +99,9 @@
 				<!--Поле ввода-->
 				<TextBox Name="tb_value" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"
 						 TextAlignment="Left" VerticalContentAlignment="Top" FontSize="13" Padding="0" BorderThickness="0"
-						 Text="{Binding ValueString, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnExceptions=True}"
+						 Text="{Binding ValueString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}"
 						 PreviewTextInput="tb_value_PreviewTextInput"
-						 PreviewKeyDown="tb_value_PreviewKeyDown"
+						 KeyDown="tb_value_PreviewKeyDown"
 						 MouseDoubleClick="tb_value_MouseDoubleClick"
 						 GotMouseCapture="tb_value_GotMouseCapture"
 						 GotKeyboardFocus="tb_value_GotKeyboardFocus"
